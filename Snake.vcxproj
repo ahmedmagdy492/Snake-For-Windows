@@ -137,8 +137,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Apple.h" />
+    <ClInclude Include="Common.h" />
     <ClInclude Include="Helper.h" />
-    <ClInclude Include="Player.h" />
     <ClInclude Include="raylib.h" />
     <ClInclude Include="Square.h" />
   </ItemGroup>
