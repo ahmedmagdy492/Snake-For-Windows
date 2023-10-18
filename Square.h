@@ -8,8 +8,6 @@
 static int speedX = 0, speedY = 0;
 static int score = 0;
 
-static int GetNodesCount();
-
 struct Direction {
     int direction;
     char axis;
@@ -33,6 +31,8 @@ struct DLinkedList {
 };
 
 static struct DLinkedList snake = { NULL, NULL };
+
+static int GetNodesCount();
 
 void Append(struct Square* square) {
     if (GetNodesCount() == MAX_SNAKE_LEN)

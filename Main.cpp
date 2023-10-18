@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <raylib.h>
-
 #include "Square.h"
 #include "Apple.h"
 #include "Helper.h"
@@ -9,10 +8,16 @@
 
 #define SCORE_LEN 1000
 
+enum GameMode {
+    GameOver,
+    Playing,
+    MenuScreen
+};
+
 int timer = 0;
 int framesCounter = 0;
 int hasPlayerStarted = 0;
-int isGameOver = 0;
+enum GameMode currentGameMode = MenuScreen;
 int prevKey = -1;
 int isPaused = 0;
 int allowMove = 0;
@@ -28,7 +33,7 @@ void RandomizeApplePosition() {
 
 struct Square* ResetGame() {
     ClearLinkedList();
-    isGameOver = 0;
+    currentGameMode = Playing;
     SetPlayerScore(0);
     timer = 0;
     prevKey = -1;
@@ -52,6 +57,8 @@ struct Square* ResetGame() {
 int main() {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Snake");
     InitAudioDevice();
+    Image bg = LoadImage("resources/menu-bg.png");
+    Texture2D bgTexture = LoadTextureFromImage(bg);
 
     struct Square* square = (struct Square*)malloc(sizeof(struct Square));
     square->x = 100;
@@ -74,7 +81,7 @@ int main() {
     SetExitKey(KEY_Q);
 
     while (!WindowShouldClose()) {
-        if (!isGameOver) {
+        if (currentGameMode == Playing) {
             if (IsKeyPressed(KEY_P)) isPaused = isPaused == 1 ? 0 : 1;
 
             if (!isPaused) {
@@ -122,11 +129,16 @@ int main() {
                     }
                 }
 
+                if (IsKeyPressed(KEY_ESCAPE)) {
+                    square = ResetGame();
+                    currentGameMode = MenuScreen;
+                }
+
                 if (hasPlayerStarted) {
                     if ((framesCounter % 3) == 0) {
                         int moveResult = Move(&dir, SCREEN_WIDTH, SCREEN_HEIGHT);
                         if (moveResult == -1) {
-                            isGameOver = 1;
+                            currentGameMode = GameOver;
                             PlaySound(fail);
                         }
                     }
@@ -142,7 +154,7 @@ int main() {
                 DrawText(scoreText, (SCREEN_WIDTH - 20) / 2, 10, 40, WHITE);
 
                 if (AmICollidingWithMySelf()) {
-                    isGameOver = 1;
+                    currentGameMode = GameOver;
                     PlaySound(fail);
                 }
 
@@ -175,7 +187,7 @@ int main() {
                 EndDrawing();
             }
         }
-        else {
+        else if (currentGameMode == GameOver) {
             // if game is over
             BeginDrawing();
             DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, CLITERAL(Color) { 0, 0, 0, 255 });
@@ -189,7 +201,40 @@ int main() {
             }
             EndDrawing();
         }
+        else if (currentGameMode == MenuScreen) {
+
+            BeginDrawing();
+            ClearBackground(DARKGREEN);
+            DrawTexture(bgTexture, (SCREEN_WIDTH - bgTexture.width) / 2, 0, WHITE);
+            int titleFontHeight = 120;
+            int titleWidth = MeasureText("Snake Game", titleFontHeight);
+
+            DrawText("Snake Game", (SCREEN_WIDTH - titleWidth) / 2, 200, titleFontHeight, WHITE);
+
+            int fontHeight = 24;
+            int textWidth = MeasureText("Start Game", fontHeight);
+            int btnWidth = textWidth + 20, btnHeight = fontHeight + 20;
+            int btnPosX = (SCREEN_WIDTH - btnWidth) / 2, btnPosY = (SCREEN_HEIGHT - btnHeight) / 2;
+            DrawRectangle(btnPosX, btnPosY, btnWidth, btnHeight, BLACK);
+
+            int textPositionX = btnPosX + ((btnWidth - textWidth) / 2);
+            int textPositionY = btnPosY + ((btnHeight - fontHeight) / 2);
+            DrawText("Start Game", textPositionX, textPositionY, fontHeight, WHITE);
+
+            DrawText("Made by Ahmed Magdy", 10, SCREEN_HEIGHT - fontHeight - 10, fontHeight, WHITE);
+            EndDrawing();
+
+            if (IsMouseButtonPressed(0)) {
+                Vector2 mousePos = GetMousePosition();
+                if ((mousePos.x >= btnPosX && mousePos.x <= (btnWidth + btnPosX)) &&
+                    (mousePos.y >= btnPosY && mousePos.y <= (btnHeight + btnPosY))) {
+                    currentGameMode = Playing;
+                }
+            }
+        }
     }
+
+    UnloadImage(bg);
 
     UnloadSound(music);
     UnloadSound(fail);
